@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+  	<meta name="format-detection" content="telephone=no" />
+  	<meta name="msapplication-tap-highlight" content="no" />
+  	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+
+  	<link rel="stylesheet" type="text/css" href="css/index.css" />
+  	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+	<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+  	<title>Metro App</title>
+</head>
+
+<body>
+	<div data-role="page" id="form-page" data-url="form-page">
+
+		<div data-role="header" data-position="fixed">
+      		<a href="#" data-role="button" data-rel="back" class="ui-btn ui-shadow ui-corner-all ui-icon-carat-l ui-btn-icon-notext ui-btn-left"></a>
+      		<h1>Customer Form</h1>
+		</div>
+
+		<div data-role="main" class="ui-content">
+      		<form action="http://m543.xyz/hw1.php" method="get">
+
+        	<div data-role="fieldcontain">
+          
+          		<fieldset data-role="controlgroup">  
+            		<legend>Service</legend>
+            		<select id="service">
+              			<option value="Metrobus">Metrobus</option>
+              			<option value="Metrorail">Metrorail</option>
+              			<option value="MetroAccess">Metro Access</option>
+              			<option value="Parking">Parking</option>
+              			<option value="Fare">Fare/Media Collection</option>
+              			<option value="Website">Website</option>
+              			<option value="Other">Other</option>
+            		</select>
+          		</fieldset>
+
+          		<fieldset>
+            		<textarea id="comment" name="comment" placeholder="Write something..."></textarea>
+          		</fieldset>
+
+          		<fieldset>
+            		<audio id="audio" src="http://www.soundjay.com/button/beep-07.wav" autostart="false" ></audio>
+            		<input id="submitButton" type="button" class="button" value="Submit" onclick="PlaySound()"/>
+            		<script>
+              			function PlaySound() {
+                			var sound = document.getElementById("audio");
+                			sound.play()
+              			}
+            		</script>
+          		</fieldset>
+
+        	</div>
+
+
+      		</form>
+    	</div>
+
+		<div data-role="footer" data-position="fixed">
+			
+		</div>
+
+	</div> <!--Page-->
+
+  	<script type="text/javascript" src="cordova.js"></script>
+</body>
+
+</html>

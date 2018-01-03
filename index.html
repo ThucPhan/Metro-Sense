@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+ 	<meta charset="utf-8" />
+	
+	<meta name="format-detection" content="telephone=no" />
+  	<!-- determine whether or not telephone numbers in HTML content will appear as hypertext links-->
+  	
+  	<meta name="msapplication-tap-highlight" content="no" />
+  	<!-- disable touch tap link highlighting on IE -->
+  	
+  	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width" />
+
+  	<link rel="stylesheet" type="text/css" href="css/index.css" />
+  	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+	<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+  	<script>
+    	$(document).delegate('a.top','click',function() {
+      		$('html, body').stop().animate({scrollTop:0}, 500);
+      		return false;
+    	});
+  	</script>
+
+	<style> 
+    	#map-page, #map-canvas { width: 100%; height: 100%; padding: 0; }
+	</style>
+  	<title>Metro App</title>
+</head>
+
+<body>
+	<div data-role="page" id="map-page" data-url="map-page">
+
+		<div data-role="header" data-position="fixed">
+      		<select id="mode">
+        		<option value="WALKING">Walking</option>
+      			<option value="DRIVING">Driving</option>
+      			<option value="BICYCLING">Bicycling</option>
+    		</select>
+		</div> <!--header-->
+
+		<div data-role="main" class="ui-content" id="map-canvas">
+			<!-- map loads here -->
+		</div>
+
+		<div data-role="footer" id="footer1" data-position="fixed">
+			<!-- name of metro station -->
+      		<div data-role="navbar">
+        		<ul><li><a href="#metro-page" id="foo"></a></li></ul>
+		  	</div>
+    	</div>
+
+	</div> <!--Map Page-->
+
+  	<div data-role="page" id="metro-page" data-url="metro-page">
+
+    	<div data-role="header" data-position="fixed">
+      		<a href="#map-page" class="ui-btn ui-shadow ui-corner-all ui-icon-carat-l ui-btn-icon-notext ui-btn-left"></a>
+      		<h1 id="demo"></h1>
+      		<a href="form.html" class="ui-btn ui-shadow ui-corner-all ui-icon-carat-r ui-btn-icon-notext ui-btn-right"></a>
+    	</div>
+
+    	<div data-role="main" class="ui-content">
+      		<section>
+        		<!-- metro API -->
+      		</section>
+
+      		<a class="top ui-btn ui-shadow ui-corner-all ui-icon-carat-u ui-btn-icon-notext ui-shadow" data-ajax="false" data-role="button" href="#top" style="float:right"></a>
+    	</div>
+
+    	<div data-role="footer" id="footer2" data-position="fixed">
+      
+    	</div>
+
+  	</div> <!--Page-->
+
+	<script>
+    	var name; //destination name
+
+//------------------------------------------------------------------------------------//
+		$( document ).on( "pagecreate", "#map-page", function() {
+			var defaultLatLng = new google.maps.LatLng(38.8951, -77.0367);  // Default to Washington, D.C.
+		  	var map;
+		  	var myCor; //user coordinates
+		  	var dest; //destination coordinates
+
+		  	if (navigator.geolocation) {
+        		function success(pos) {
+					// Location found, show map with these coordinates
+          			drawMap(new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude));
+				}
+        
+        		function fail(error) {
+					drawMap(defaultLatLng);  // Failed to find location, show default map
+				}
+
+				// Find the users current position
+				var geoOption = {
+				    enableHighAccuracy: true,
+					//maximum length of time (milliseconds) that is allowed to pass from the call to watchPosition until the corresponding successCallback is invoked
+					timeout: 6000,
+					//app is willing to accept a cached position whose age is no greater than the specified time in milliseconds
+					maximumAge: 1000
+				};
+				//navigator.geolocation.watchPosition(success,fail,geoOption);
+        		navigator.geolocation.getCurrentPosition(success,fail,geoOption);
+				
+				} else {
+        			drawMap(defaultLatLng);  // No geolocation support, show default map
+				}
+
+      		//already get location   
+		  	function drawMap(latlng) {
+        		var myOptions = {
+					zoom: 15, //street level
+					center: latlng,
+            		mapTypeId: google.maps.MapTypeId.ROADMAP
+            	};
+        
+        		map = new google.maps.Map(document.getElementById("map-canvas"), myOptions);
+
+        		myCor = latlng;
+
+        		var service = new google.maps.places.PlacesService(map);
+        		var request = {
+            		location: myCor,
+            		type: ['subway_station'],
+            		rankBy: google.maps.places.RankBy.DISTANCE
+        		};
+        		service.nearbySearch(request,callback);        	
+            } //end function
+
+		  	function callback(results, status) {
+        		if (status === google.maps.places.PlacesServiceStatus.OK) {
+          			findDest(results[0]);
+        		}
+      		} //end function
+
+      		function findDest(place) {
+        		dest = place.geometry.location;
+      			var name_temp = place.name;
+
+        		var k = name_temp.includes(" Station");
+
+        		if (k = "true") {
+          			name = name_temp.replace(" Station","");
+        		} else {
+          			name = name_temp;
+        		}
+
+      			//Store name of metro station into the browser Session Storage
+      			sessionStorage.setItem('name of metro station',name);
+
+        		var directionsService = new google.maps.DirectionsService;
+        		var directionsDisplay = new google.maps.DirectionsRenderer;
+        		directionsDisplay.setMap(map);
+        		calculateAndDisplayRoute(directionsService, directionsDisplay, myCor, dest);
+        	
+        		document.getElementById('mode').addEventListener('change', function() {
+        			calculateAndDisplayRoute(directionsService, directionsDisplay, myCor, dest);
+        		});
+
+        		document.getElementById("foo").innerHTML = name;
+      		} //end function
+
+    		function calculateAndDisplayRoute(directionsService, directionsDisplay, myCor, dest) {
+        		var selectedMode = document.getElementById('mode').value;
+        		var request = {
+				    origin: myCor, //user location
+				    destination: dest,
+				    travelMode: google.maps.TravelMode[selectedMode]
+        		};
+        		directionsService.route(request, function(response, status) {
+          			if (status === 'OK') {
+            			directionsDisplay.setDirections(response);
+          			} else {
+            			window.alert('Directions request failed due to ' + status);
+          			}
+        		});
+		  	} //end function
+
+    	});
+
+//------------------------------------------------------------------------------------//
+    	$( document ). on( "pagecreate", "#metro-page", function() {
+      		name = sessionStorage.getItem('name of metro station');
+      		document.getElementById("demo").innerHTML = name;
+
+      		var section = document.querySelector('section');
+
+      		//metro API
+      		var params = {
+          		api_key: "91b33a300ac8476297d7acdbe2825d9f",
+      		};
+      		$.ajax({
+        		url: "https://api.wmata.com/StationPrediction.svc/json/GetPrediction/all?" + $.param(params),
+        		type: "GET",
+      		})
+      		.done(function(data) {
+        		//alert("success");
+        		continuouslyUpdate(data);
+      		})
+      		.fail(function() {
+        		alert("error");
+      		});
+
+      		function continuouslyUpdate(data){
+        		upcoming(data);
+
+        		var requestURL = 'https://api.wmata.com/StationPrediction.svc/json/GetPrediction/all?api_key=91b33a300ac8476297d7acdbe2825d9f';
+        		var request = new XMLHttpRequest();
+        		request.onreadystatechange = function() {
+        			//4 = DONE, 200 = successful request
+        			if (this.readyState == 4 && this.status == 200) {
+        				var trainsText = request.response;
+        				var metro = JSON.parse(trainsText);
+
+            			//next train arrival information is refreshed once every 60 seconds
+            			setInterval(function() {
+              				location.reload();
+              				continuouslyUpdate(metro);
+            			}, 60000);
+        			}
+        		};
+        		request.open('GET',requestURL,true);
+        		request.send();
+      		} //end function
+
+      		function upcoming(jsonObj) {
+        		var trains = jsonObj['Trains'];
+
+        		for (var i=0; i<trains.length; i++) {
+          			var myArticle = document.createElement('article');
+          			var trainLine = document.createElement('h4');
+          			var trainDestination = document.createElement('h4');
+          			var trainTime = document.createElement('h4');
+          			var hr = document.createElement('hr');
+
+          			trainLine.textContent = 'Color: ' + trains[i].Line;
+          			trainDestination.textContent = 'Destination: ' + trains[i].DestinationName;
+
+          			if (Number(trains[i].Min) > 1) {
+            			trainTime.textContent = 'Time: ' + trains[i].Min + ' minutes';
+          			}
+          			else if (Number(trains[i].Min) == 1) {
+            			trainTime.textContent = 'Time: ' + trains[i].Min + ' minute';
+          			}
+          			else {
+            			trainTime.textContent = 'Time: ' + trains[i].Min;
+          			}
+
+          			var trainLocation = trains[i].LocationName;
+
+          			var n = trainLocation.localeCompare(name);
+
+          			if (n == 0) {
+            			myArticle.appendChild(trainLine);
+            			myArticle.appendChild(trainDestination);
+            			myArticle.appendChild(trainTime);
+            			myArticle.appendChild(hr);
+            			section.appendChild(myArticle);
+          			}
+        		}
+      		} //end function
+    	});
+
+	</script>
+	<script
+    	src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC9FKnsI7BbEVWjwnSWhdhvvyOheVX-HQI&libraries=places">
+  	</script>
+  	<script type="text/javascript" src="cordova.js"></script>
+</body>
+
+</html>
